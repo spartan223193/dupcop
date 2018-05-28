@@ -5,7 +5,6 @@ import hashlib
 import os
 import re
 
-
 class DupCop(object):
 
     def __init__(self, logger=logging.getLogger(__name__)):
