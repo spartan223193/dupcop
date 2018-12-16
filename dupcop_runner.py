@@ -17,7 +17,6 @@ def main():
     argparser.add_argument('--regex-whitelist', help='Only deduplicate files matching provided regex pattern', const=None, required=False)
     argparser.add_argument('--dry-run', help='Show what changes the script will make without deleting duplicates from the filesystem', action='store_true', required=False)
     argparser.add_argument('-d', '--debug', help='Enable debugging logging', action='store_true', required=False)
-    argparser.add_argument('--only-remove-whitelist', help="Only remove files matching expression", const=None, type=str, required=False)
 
     args = argparser.parse_args()
 
@@ -31,7 +30,7 @@ def main():
 
     dcop = DupCop(logger=log)
 
-    dcop.run(args.source, args.depth, args.regex_ignore, args.regex_whitelist, args.dry_run, args.only_remove_whitelist)
+    dcop.run(args.source, args.depth, args.regex_ignore, args.regex_whitelist, args.dry_run)
 
 if __name__ == '__main__':
     main()

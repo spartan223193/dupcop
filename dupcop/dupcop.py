@@ -50,18 +50,7 @@ class DupCop(object):
         if not dry_run:
             os.remove(dir_file)
 
-    def add_hash_to_discovered_hashes(self, dir_file):
-        """
-        Adds a file hash to the global set of hashes discovered
-
-        :param dir_file:
-        :return:
-        """
-        self.file_count += 1
-        file_hash = self.file_hash(dir_file)
-        self.file_hashes.add(file_hash)
-
-    def duplicate_remove(self, dir_file, dry_run=False, count=True):
+    def duplicate_remove(self, dir_file, dry_run=False):
         """
         Determine if a file is a duplicate, if so delete it
         
@@ -69,17 +58,16 @@ class DupCop(object):
         :return:
         """
 
-        if count:
-            self.file_count += 1
-
+        self.file_count += 1
         file_hash = self.file_hash(dir_file)
-        
+
         if file_hash in self.file_hashes:
             self.delete_file(dir_file, dry_run)
+
         else:
             self.file_hashes.add(file_hash)
 
-    def run(self, start_path, depth_limit=None, regex_ignore=None, regex_whitelist=None, dry_run=False, only_remove_whitelist=None):
+    def run(self, start_path, depth_limit=None, regex_ignore=None, regex_whitelist=None, dry_run=False):
         """
         Walks a directory structure and returns a list of files
         
@@ -87,7 +75,6 @@ class DupCop(object):
         :param depth_limit:  The maximum depth to recurse
         :param regex_ignore: Ignore files matching the regex_ignore regex
         :param regex_whitelist: Only add files matching the regex_whitelist function
-        :param only_remove_whitelist: Only remove duplicate files that match the regex
         :return:
         """
 
@@ -96,9 +83,6 @@ class DupCop(object):
 
         if regex_whitelist:
             re_whitelist = re.compile(regex_whitelist)
-
-        if only_remove_whitelist:
-            re_only_remove_whitelist = re.compile(only_remove_whitelist)
 
         if depth_limit is not None:
             d_count = 0
@@ -111,8 +95,7 @@ class DupCop(object):
                     return
                 else:
                     d_count += 1
-            
-            # O(n) runtime without only_remove_whitelist 
+
             for f in files:
 
                 # Skip files that match an ignore regex if present
@@ -125,31 +108,8 @@ class DupCop(object):
                     if re_whitelist.match(f):
                         f_path = os.path.join(dirpath, f)
                         self.duplicate_remove(f_path, dry_run)
-                        continue
 
-                # A second iteration is required for only_remove_whitelist before removing duplicates
-                # First run populates hash set, second run removes duplicates matching the regex
-                if only_remove_whitelist:
-
-                    # Check match on regex if provided
-                    if regex_whitelist:
-                        if re_whitelist.match(f):
-                            f_path = os.path.join(dirpath, f)
-                            self.add_hash_to_discovered_hashes(f_path)
-
-                    # Add the hash to the whitelist
-                    else:
-                        f_path = os.path.join(dirpath, f)
-                        self.add_hash_to_discovered_hashes(f_path)
-                    
                 # If a whitelist is not present process the file normally
                 else:
                     f_path = os.path.join(dirpath, f)
                     self.duplicate_remove(f_path, dry_run)
-                
-            # O(n^2) runtime if only_remove_whitelist
-            if only_remove_whitelist:
-                for f in files:
-                    f_path = os.path.join(dirpath, f)
-                    if re_only_remove_whitelist.match(f): 
-                        self.duplicate_remove(f_path, dry_run, count=False)
